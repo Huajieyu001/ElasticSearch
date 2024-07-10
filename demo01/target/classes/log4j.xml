@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="OFF" monitorInterval="1800">
+    <properties>
+        <property name="LOG_HOME">/WEB-INF/logs</property>
+        <property name="FILE_NAME">student</property>
+    </properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n" />
+        </Console>
+
+    </Appenders>
+    <Loggers>
+        <!-- <Logger name="com.cssweb.test.app" level="trace" additivity="true">
+            <AppenderRef ref="running-log" /> </Logger> -->
+        <Root level="debug">
+            <!-- 这里是输入到控制台-->
+            <AppenderRef ref="Console" />
+        </Root>
+    </Loggers>
+</Configuration>
