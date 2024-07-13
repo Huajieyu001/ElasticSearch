@@ -1,5 +1,6 @@
 package com.huajieyu.es.batch;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -9,13 +10,22 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.io.stream.StreamOutput;
 import org.elasticsearch.common.unit.Fuzziness;
+import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.*;
+import org.elasticsearch.search.aggregations.*;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 
+import java.io.IOException;
+import java.util.Map;
+
 public class ElasticSearchClient_DocQuery {
+
+    private static ObjectMapper mapper = new ObjectMapper();
 
     public static void main(String[] args) throws Exception {
 
@@ -119,6 +129,50 @@ public class ElasticSearchClient_DocQuery {
         response =  highLevelClient.search(request, RequestOptions.DEFAULT);
 
         response.getHits().forEach(System.out::println);
+
+        // 9.高亮查询 -- no suc
+        System.out.println("------------------------------9.高亮查询");
+        SearchSourceBuilder builder7 = new SearchSourceBuilder();
+        TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("name", "asdfg");
+
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.preTags("<font color='red'>");
+        highlightBuilder.postTags("</font>");
+        highlightBuilder.field("name.keyword");
+
+        builder7.highlighter(highlightBuilder);
+        builder7.query(termQueryBuilder);
+        request.source(builder7);
+
+        response =  highLevelClient.search(request, RequestOptions.DEFAULT);
+        response.getHits().forEach(System.out::println);
+
+        // 10.聚合查询
+        System.out.println("------------------------------10.聚合查询");
+
+        SearchSourceBuilder builder8 = new SearchSourceBuilder();
+
+        AggregationBuilder aggregationBuilder = AggregationBuilders.max("maxAge").field("age");
+        builder8.aggregation(aggregationBuilder);
+
+        request.source(builder8);
+        response = highLevelClient.search(request, RequestOptions.DEFAULT);
+
+        // 输出最大年龄的数据    注意：要使用response.getAggregations()获取,而不是response.getHits()
+        System.out.println(mapper.writeValueAsString(response.getAggregations()));
+        System.out.println("--------------------------------------");
+        response.getHits().forEach(System.out::println);
+
+        // 11.分组查询
+        System.out.println("------------------------------11.分组查询");
+        SearchSourceBuilder builder9 = new SearchSourceBuilder();
+
+        AggregationBuilder aggregationBuilder1 = AggregationBuilders.terms("ageGroup").field("age");
+        builder9.aggregation(aggregationBuilder1);
+
+        request.source(builder9);
+        response = highLevelClient.search(request, RequestOptions.DEFAULT);
+        System.out.println(mapper.writeValueAsString(response.getAggregations()));
 
         highLevelClient.close();
     }
